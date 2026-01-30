@@ -17,9 +17,8 @@ DHCP centralisé et résolution DNS interne.
 
 ## 🔧 Technologies
 - GNS3
-- Linux (Debian)
 - Switch L2
-- Routeur Cisco-like
+- Routeur VyOS
 - isc-dhcp-server
 - bind9 / dnsmasq
 
@@ -68,3 +67,4 @@ Voir dossiers /incidents/
 - Importance du tagging VLAN
 - Diagnostic rapide via tables ARP et routage
 - Méthodologie OSI pour le dépannage
+
