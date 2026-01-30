@@ -1,0 +1,45 @@
+# Incident Théorique : Blocage Users → Admin
+
+## 🚨 Contexte
+
+- VLAN10 → PC1 (Users)  
+- VLAN20 → PC2 (Users)  
+- VLAN30 → PC3 (Admin / serveur)  
+- VyOS en routage inter-VLAN  
+- Problème : Par défaut, le routage inter-VLAN autorise PC1 et PC2 à accéder au VLAN30 → trafic Admin accessible.
+
+---
+
+## 🔍 Objectif
+
+Empêcher que les utilisateurs des VLAN10 et VLAN20 puissent accéder aux ressources du VLAN30 (Admin), tout en maintenant :
+
+- Le routage vers Internet fonctionnel  
+- La communication entre VLAN10 et VLAN20 si nécessaire
+
+---
+
+## 🛠️ Solution théorique
+
+### 1️⃣ Avec VyOS complet (firewall supporté)
+
+1. **Créer un firewall IPv4** :
+
+```bash
+set firewall ipv4 name BLOCK_USERS default-action accept
+set firewall ipv4 name BLOCK_USERS rule 10 action drop
+set firewall ipv4 name BLOCK_USERS rule 10 source address 192.168.10.0/24
+set firewall ipv4 name BLOCK_USERS rule 10 destination address 192.168.30.0/24
+set firewall ipv4 name BLOCK_USERS rule 10 description 'Bloquer VLAN10 vers Admin'
+
+set firewall ipv4 name BLOCK_USERS rule 20 action drop
+set firewall ipv4 name BLOCK_USERS rule 20 source address 192.168.20.0/24
+set firewall ipv4 name BLOCK_USERS rule 20 destination address 192.168.30.0/24
+set firewall ipv4 name BLOCK_USERS rule 20 description 'Bloquer VLAN20 vers Admin'
+
+set interfaces ethernet eth0 vif 10 firewall in name BLOCK_USERS
+set interfaces ethernet eth0 vif 20 firewall in name BLOCK_USERS
+
+commit
+save
+exit
