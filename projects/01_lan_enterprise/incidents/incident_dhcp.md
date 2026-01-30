@@ -1,33 +1,41 @@
-# Incident 2 — DHCP relay absent
+# Incident 2 — DHCP relay absent / DHCP non distribué sur VLAN
 
-🚨 **Symptôme**  
-Les machines d’un VLAN ne reçoivent plus d’adresses IP via DHCP.  
-- PC2 (VLAN20) et PC3 (VLAN30) restent avec une IP APIPA (169.254.x.x) ou aucune IP.  
-- Les PCs ne peuvent plus joindre la passerelle ni communiquer avec le serveur interne.
+## 🚨 Symptôme
+Le PC2 ne reçoit pas d’adresse IP correcte pour son VLAN prévu (VLAN20).  
+- IP reçue : 192.168.30.101/24 (VLAN30) au lieu de 192.168.20.x  
+- Passerelle VLAN20 (192.168.20.1) non atteinte via DHCP  
+- DHCP pour VLAN20 KO  
+- Communication avec la gateway VLAN30 fonctionne car PC2 a reçu une IP sur ce VLAN
 
 ---
 
-🔍 **Diagnostic**  
-- Ping vers la passerelle VyOS KO pour VLAN affecté  
-- Vérification VLAN sur switch → port access correct  
-- Vérification subinterface VyOS → VLAN configuré  
-- Vérification du DHCP → serveur actif sur VyOS mais aucun bail distribué  
-- Observation : pas de relay ou relay mal configuré pour le VLAN → le DHCP broadcast du VLAN ne parvient pas au serveur.
+## 🔍 Diagnostic
+- Vérification IP sur PC2 :
+
+```text
+PC2> show ip
+
+NAME        : PC2[1]
+IP/MASK     : 192.168.30.101/24
+GATEWAY     : 192.168.30.1
+DNS         : 8.8.8.8
+DHCP SERVER : 192.168.30.1
+DHCP LEASE  : 86392, 86400/43200/75600
+MAC         : 00:50:79:66:68:01
+LPORT       : 20030
+RHOST:PORT  : 127.0.0.1:20031
+MTU         : 1500
 
 ---
 
 🛠️ **Cause racine**  
-- Le **DHCP relay n’est pas activé** pour le VLAN ou la subinterface sur VyOS  
-- Le DHCP broadcast ne traverse pas le VLAN isolé → les PCs ne peuvent pas obtenir d’IP
+- DHCP relay absent ou mal configuré sur VyOS pour VLAN20
+- Les requêtes DHCP broadcast du VLAN20 n’atteignent pas le serveur → PC reçoit IP d’un autre VLAN (VLAN30)
 
 ---
 
 ✅ **Résolution**  
-- Sur VyOS, activer le DHCP relay ou vérifier le DHCP serveur sur la subinterface correspondante :
 
-```bash
-# Exemple pour VLAN20
-set service dhcp-server shared-network-name VLAN20 subnet 192.168.20.0/24 subnet-id 20
-# Assurer que la subinterface VLAN20 est up
-show interfaces
-
+- Vérifier ou activer le DHCP relay pour VLAN20 sur VyOS
+- Sur PC2, renouveler l’IP via DHCP
+- Tester la connectivité
